@@ -54,7 +54,7 @@ Video: https://www.youtube.com/watch?v=SAc6_1Y7QJc
 
 ####  Workspace overview
 <div align="left">
-  <img src="Preview/Preview_4.png" width="450" alt="Preview">
+  <img src="Preview/Preview_7.png" width="450" alt="Preview">
 </div>
 
 ### Dependencies:
