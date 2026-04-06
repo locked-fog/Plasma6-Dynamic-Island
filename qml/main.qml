@@ -17,7 +17,8 @@ Window {
     color: "transparent"
 
     // Floating island aesthetic with blur background
-    background: Rectangle {
+    Rectangle {
+        anchors.fill: parent
         color: Qt.rgba(0.08, 0.09, 0.10, 0.85)
         radius: 34
         border.width: 1
