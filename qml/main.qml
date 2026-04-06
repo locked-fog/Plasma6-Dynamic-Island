@@ -2,251 +2,242 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import QtQuick.Effects
 
 import Archipelago 1.0
 
 Window {
     id: sidebarWindow
-    width: 380
-    height: Screen.height
-    x: Screen.width - width
-    y: 0
+    width: 160  // Collapsed sidebar width
+    height: sidebarLoader.height + 20
+    x: Screen.width - width - 10
+    y: 100
     visible: true
-    flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.BypassWindowManagerHint
+    flags: Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.BypassWindowManagerHint | Qt.WindowDoesNotAcceptFocus
     color: "transparent"
 
-    // Enable transparency
-    Rectangle {
-        id: sidebarBackground
-        anchors.fill: parent
-        color: Qt.rgba(0.15, 0.16, 0.13, 0.88)
-        radius: 0
+    // Floating island aesthetic with blur background
+    background: Rectangle {
+        color: Qt.rgba(0.08, 0.09, 0.10, 0.85)
+        radius: 34
+        border.width: 1
+        border.color: Qt.rgba(1, 1, 1, 0.08)
     }
 
-    // Main sidebar content
-    ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 8
-        spacing: 4
+    // Main content loader - handles morphing
+    Item {
+        id: sidebarLoader
+        anchors.centerIn: parent
+        width: mainIsland.width
+        height: mainIsland.height
 
-        // Top section: Current time and status
+        // The morphing island capsule
         Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 60
-            color: "transparent"
+            id: mainIsland
+            width: islandStateHandler.targetWidth
+            height: islandStateHandler.targetHeight
+            radius: islandStateHandler.targetRadius
+            color: islandStateHandler.currentColor
+            clip: true
 
-            Row {
-                anchors.centerIn: parent
-                spacing: 12
-
-                Text {
-                    id: timeText
-                    text: new Date().toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
-                    color: "#FFFFFF"
-                    font.pixelSize: 32
-                    font.weight: Font.Medium
-                }
-
-                Text {
-                    id: dateText
-                    text: new Date().toLocaleDateString(Qt.locale("en_US"), "ddd dd")
-                    color: "#AAAAAA"
-                    font.pixelSize: 14
-                    anchors.bottom: timeText.bottom
-                    anchors.bottomMargin: 6
-                }
+            // Inner glow/border
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: 1
+                radius: parent.radius - 1
+                color: "transparent"
+                border.width: 1
+                border.color: Qt.rgba(1, 1, 1, 0.06)
             }
-        }
 
-        // Divider
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: Qt.rgba(1, 1, 1, 0.25)
-        }
+            // Morphing animations
+            Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
+            Behavior on height { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
+            Behavior on radius { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
+            Behavior on color { ColorAnimation { duration: 280; easing.type: Easing.InOutQuad } }
 
-        // System Monitor Section
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 100
-            color: "transparent"
+            // --- State Handler ---
+            QtObject {
+                id: islandStateHandler
 
+                // Current state
+                property string currentState: "compact"  // compact, expanded, notification, media
+
+                // Target dimensions based on state
+                readonly property real targetWidth: {
+                    switch (currentState) {
+                        case "notification": return 280
+                        case "media": return 320
+                        case "expanded": return 360
+                        default: return 140
+                    }
+                }
+                readonly property real targetHeight: {
+                    switch (currentState) {
+                        case "notification": return 64
+                        case "media": return 80
+                        case "expanded": return 200
+                        default: return 68
+                    }
+                }
+                readonly property real targetRadius: {
+                    switch (currentState) {
+                        case "notification": return 32
+                        case "media": return 40
+                        case "expanded": return 40
+                        default: return 34
+                    }
+                }
+                readonly property color currentColor: "#0a0a0a"
+            }
+
+            // Content layers
             Column {
                 anchors.centerIn: parent
-                spacing: 8
+                spacing: 0
 
-                // Battery
+                // Clock/Current time display
                 Row {
+                    id: clockRow
                     spacing: 8
+                    opacity: islandStateHandler.currentState === "compact" ? 1 : 0
+
                     Text {
-                        text: Backend.isCharging ? "⚡" : "🔋"
+                        id: timeText
+                        text: new Date().toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
                         color: "#FFFFFF"
-                        font.pixelSize: 16
-                    }
-                    Text {
-                        text: Backend.batteryCapacity >= 0 ? Backend.batteryCapacity + "%" : "N/A"
-                        color: "#FFFFFF"
-                        font.pixelSize: 14
+                        font.pixelSize: 24
+                        font.weight: Font.Medium
+                        font.family: "Inter"
                     }
                 }
 
-                // Volume
-                Row {
-                    spacing: 8
-                    Text {
-                        text: Backend.isMuted ? "🔇" : "🔊"
-                        color: "#FFFFFF"
-                        font.pixelSize: 16
-                    }
-                    Text {
-                        text: Backend.volume + "%"
-                        color: "#FFFFFF"
-                        font.pixelSize: 14
-                    }
-                }
+                // Notification content
+                Item {
+                    id: notificationContent
+                    width: 240
+                    height: 48
+                    anchors.centerIn: parent
+                    visible: islandStateHandler.currentState === "notification"
+                    opacity: visible ? 1 : 0
 
-                // Brightness
-                Row {
-                    spacing: 8
-                    Text {
-                        text: "☀️"
-                        color: "#FFFFFF"
-                        font.pixelSize: 16
-                    }
-                    Text {
-                        text: Backend.brightness + "%"
-                        color: "#FFFFFF"
-                        font.pixelSize: 14
-                    }
-                }
-            }
-        }
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 12
 
-        // Divider
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: Qt.rgba(1, 1, 1, 0.25)
-        }
-
-        // Quick actions placeholder
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 120
-            color: "transparent"
-
-            GridLayout {
-                anchors.fill: parent
-                anchors.margins: 8
-                columns: 3
-                rowSpacing: 8
-                columnSpacing: 8
-
-                Repeater {
-                    model: [
-                        { icon: "🔊", label: "Volume" },
-                        { icon: "☀️", label: "Brightness" },
-                        { icon: "📱", label: "Devices" },
-                        { icon: "📁", label: "Files" },
-                        { icon: "⚙️", label: "Settings" },
-                        { icon: "📋", label: "Clipboard" }
-                    ]
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        color: Qt.rgba(1, 1, 1, 0.19)
-                        radius: 12
+                        Text {
+                            text: "🔔"
+                            color: "#FFFFFF"
+                            font.pixelSize: 20
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
 
                         Column {
-                            anchors.centerIn: parent
-                            spacing: 4
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
 
                             Text {
-                                text: modelData.icon
+                                text: "Notification"
                                 color: "#FFFFFF"
-                                font.pixelSize: 24
-                                anchors.horizontalCenter: parent.horizontalCenter
+                                font.pixelSize: 14
+                                font.weight: Font.Medium
                             }
                             Text {
-                                text: modelData.label
-                                color: "#AAAAAA"
-                                font.pixelSize: 10
-                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "Notification body text"
+                                color: "#888888"
+                                font.pixelSize: 11
+                            }
+                        }
+                    }
+                }
+
+                // Media content
+                Item {
+                    id: mediaContent
+                    width: 280
+                    height: 64
+                    anchors.centerIn: parent
+                    visible: islandStateHandler.currentState === "media"
+                    opacity: visible ? 1 : 0
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 12
+
+                        Rectangle {
+                            width: 48
+                            height: 48
+                            radius: 8
+                            color: Qt.rgba(1, 1, 1, 0.1)
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Text {
+                                text: "🎵"
+                                color: "#FFFFFF"
+                                font.pixelSize: 20
+                                anchors.centerIn: parent
                             }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("Clicked:", modelData.label)
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 2
+
+                            Text {
+                                text: "Track Title"
+                                color: "#FFFFFF"
+                                font.pixelSize: 14
+                                font.weight: Font.Medium
+                            }
+                            Text {
+                                text: "Artist Name"
+                                color: "#888888"
+                                font.pixelSize: 12
                             }
                         }
                     }
                 }
             }
-        }
 
-        // Drop zone placeholder for "中转站"
-        Rectangle {
-            id: dropZone
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: 200
-            color: dropArea.containsDrag ? Qt.rgba(1, 1, 1, 0.31) : Qt.rgba(1, 1, 1, 0.13)
-            radius: 16
-            border.width: 2
-            border.color: dropArea.containsDrag ? Qt.rgba(1, 1, 1, 0.38) : Qt.rgba(1, 1, 1, 0.19)
-
-            Column {
-                anchors.centerIn: parent
-                spacing: 8
-
-                Text {
-                    text: "📎"
-                    color: "#FFFFFF"
-                    font.pixelSize: 36
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                Text {
-                    text: "Drop here"
-                    color: "#AAAAAA"
-                    font.pixelSize: 14
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-                Text {
-                    text: "拖放内容到此处暂存"
-                    color: "#666666"
-                    font.pixelSize: 12
-                    anchors.horizontalCenter: parent.horizontalCenter
-                }
-            }
-
-            DropArea {
-                id: dropArea
+            // Click handler
+            MouseArea {
                 anchors.fill: parent
-                keys: ["text/plain", "text/uri-list", "text/x-moz-url"]
-
-                onEntered: (drag) => {
-                    console.log("Drag entered with keys:", drag.keys)
-                }
-
-                onDropped: (drop) => {
-                    console.log("Dropped:", drop.getDataAsString("text/plain"))
-                    Backend.sendNotification("Content Staged", "Data has been staged for transfer")
+                onClicked: {
+                    // Toggle through states for demo
+                    var states = ["compact", "notification", "media", "expanded"]
+                    var currentIndex = states.indexOf(islandStateHandler.currentState)
+                    islandStateHandler.currentState = states[(currentIndex + 1) % states.length]
                 }
             }
         }
     }
 
-    // Update time every second
+    // Sidebar expansion handle
+    Rectangle {
+        id: expandHandle
+        width: 8
+        height: 60
+        radius: 4
+        color: Qt.rgba(1, 1, 1, 0.15)
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.left: parent.left
+        anchors.leftMargin: -4
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            onEntered: parent.color = Qt.rgba(1, 1, 1, 0.3)
+            onExited: parent.color = Qt.rgba(1, 1, 1, 0.15)
+        }
+    }
+
+    // Update time
     Timer {
         interval: 1000
         running: true
         repeat: true
         onTriggered: {
             timeText.text = new Date().toLocaleTimeString(Qt.locale("en_US"), "HH:mm")
-            dateText.text = new Date().toLocaleDateString(Qt.locale("en_US"), "ddd dd")
         }
     }
 
