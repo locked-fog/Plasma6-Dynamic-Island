@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
-import QtQuick.Shapes
 
 import Archipelago 1.0
 
@@ -20,11 +19,8 @@ Window {
     Rectangle {
         id: sidebarBackground
         anchors.fill: parent
-        color: "#E026282020"  // Semi-transparent dark
+        color: Qt.rgba(0.15, 0.16, 0.13, 0.88)
         radius: 0
-
-        // Let mouse events pass through when not interacting
-        // Note: This is a basic implementation
     }
 
     // Main sidebar content
@@ -66,7 +62,7 @@ Window {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 1
-            color: "#40FFFFFF"
+            color: Qt.rgba(1, 1, 1, 0.25)
         }
 
         // System Monitor Section
@@ -130,7 +126,7 @@ Window {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 1
-            color: "#40FFFFFF"
+            color: Qt.rgba(1, 1, 1, 0.25)
         }
 
         // Quick actions placeholder
@@ -159,7 +155,7 @@ Window {
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        color: "#30FFFFFF"
+                        color: Qt.rgba(1, 1, 1, 0.19)
                         radius: 12
 
                         Column {
@@ -197,10 +193,10 @@ Window {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumHeight: 200
-            color: dropArea.containsDrag ? "#50FFFFFF" : "#20FFFFFF"
+            color: dropArea.containsDrag ? Qt.rgba(1, 1, 1, 0.31) : Qt.rgba(1, 1, 1, 0.13)
             radius: 16
             border.width: 2
-            border.color: dropArea.containsDrag ? "#60FFFFFF" : "#30FFFFFF"
+            border.color: dropArea.containsDrag ? Qt.rgba(1, 1, 1, 0.38) : Qt.rgba(1, 1, 1, 0.19)
 
             Column {
                 anchors.centerIn: parent
